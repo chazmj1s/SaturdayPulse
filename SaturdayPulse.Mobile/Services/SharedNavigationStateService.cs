@@ -271,6 +271,32 @@ namespace SaturdayPulse.Services
             SetWeekSilent(currentWeek);
         }
 
+        // ── Cross-tab game navigation (2026-09-05) ─────────────────────────
+        // My Teams' opponent-name tap needs to (a) switch to the Games tab
+        // and (b) tell Games which game to scroll to/highlight once it's
+        // filtered into view. Neither MyTeamsViewModel nor ScheduleViewModel
+        // reference MainViewModel or each other, so both signals route
+        // through here — same shape as FilterChanged/EntitlementChanged
+        // elsewhere in this app.
+        //
+        // TabChangeRequested: MainViewModel is the sole owner of tab
+        // selection (SelectedIndex) and subscribes to this to switch tabs.
+        //
+        // GameHighlightRequested: ScheduleViewModel subscribes and searches
+        // its already-filtered Games for a match. Callers should set
+        // SelectedConference/SelectedWeek BEFORE raising this — those
+        // setters each queue their own ApplyFiltersAndSort via
+        // OnNavStateChanged (MainThread.BeginInvokeOnMainThread), and
+        // ScheduleViewModel's handler queues itself the same way so it
+        // runs after them (same-thread FIFO order) rather than racing
+        // ahead and having its ScrollTo undone by their CollectionView Reset.
+
+        public event Action? TabChangeRequested;
+        public void RequestTabChange() => TabChangeRequested?.Invoke();
+
+        public event Action<int>? GameHighlightRequested;
+        public void RequestGameHighlight(int gameId) => GameHighlightRequested?.Invoke(gameId);
+
         // ── INotifyPropertyChanged ────────────────────────────────────────
 
         public event PropertyChangedEventHandler? PropertyChanged;

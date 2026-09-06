@@ -28,5 +28,15 @@ namespace SaturdayPulse.Helpers
 
             return null;
         }
+
+        public static string ToDisplayDate(this string value)
+        {
+            if (!string.IsNullOrWhiteSpace(value) && DateTime.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime exactResult))
+            {
+                return exactResult.ToString("ddd, MMM %d", CultureInfo.InvariantCulture);
+            }
+
+            return value;
+        }
     }
 }

@@ -91,6 +91,24 @@ namespace SaturdayPulse.ViewModels
                 if (week > 0) _navState.SelectedWeek = week;
             });
 
+            // Opponent-name link (2026-09-05) — forces the Conference filter
+            // to All (the target game's conference may not match whatever's
+            // currently selected) and jumps the week selector to the game's
+            // week, then asks MainViewModel to switch tabs and
+            // ScheduleViewModel to scroll/highlight — see
+            // SharedNavigationStateService's TabChangeRequested/
+            // GameHighlightRequested remarks for why this doesn't just call
+            // either ViewModel directly.
+            NavigateToGameCommand = new Command<GameResult>(game =>
+            {
+                if (game == null) return;
+
+                _navState.SelectedConference = "All";
+                _navState.SelectedWeek = game.Week;
+                _navState.RequestTabChange();
+                _navState.RequestGameHighlight(game.Id);
+            });
+
             // Copied from PowerRankingsViewModel's expand commands exactly —
             // same lazy-fetch-once-then-toggle shape, same TeamRanking fields.
             ToggleTrendExpandCommand = new Command<TeamRanking>(async t =>
@@ -198,22 +216,6 @@ namespace SaturdayPulse.ViewModels
                 if (game == null) return;
                 _personalGameService.Toggle(game.AwayId, game.HomeId);
                 game.IsGameFavorited = _personalGameService.IsFavorited(game.AwayId, game.HomeId);
-            });
-
-            // Mirrors ScheduleViewModel's ToggleDetailsCommand exactly.
-            ToggleDetailsCommand = new Command<GameResult>(game =>
-            {
-                if (game == null) return;
-                game.IsDetailsExpanded = !game.IsDetailsExpanded;
-            });
-
-            // Mirrors ScheduleViewModel's ToggleRivalryNotesCommand exactly —
-            // separate expand state from Details. Visibility (entitlement + data)
-            // is decided in XAML via RivalryNotesVisibilityConverter, not here.
-            ToggleRivalryNotesCommand = new Command<GameResult>(game =>
-            {
-                if (game == null) return;
-                game.IsRivalryNotesExpanded = !game.IsRivalryNotesExpanded;
             });
 
             _followService.TeamFollowChanged  += OnTeamFollowChanged;
@@ -345,6 +347,7 @@ namespace SaturdayPulse.ViewModels
 
         public ICommand SelectTeamCommand         { get; }
         public ICommand SelectWeekCommand          { get; }
+        public ICommand NavigateToGameCommand      { get; }
         public ICommand RefreshCommand             { get; }
         public ICommand ToggleTrendExpandCommand   { get; }
         public ICommand ToggleArcExpandCommand     { get; }
@@ -353,8 +356,6 @@ namespace SaturdayPulse.ViewModels
         public ICommand ToggleRecruitingListCommand  { get; }
         public ICommand TogglePortalInListCommand    { get; }
         public ICommand TogglePortalOutListCommand   { get; }
-        public ICommand ToggleDetailsCommand       { get; }
-        public ICommand ToggleRivalryNotesCommand  { get; }
         public ICommand TogglePersonalGameCommand  { get; }
         public ICommand SeasonPassCommand          { get; }
         public ICommand TogglePostseasonCommand    { get; }
@@ -543,7 +544,7 @@ namespace SaturdayPulse.ViewModels
         }
 
         private static string TryFormatShortDate(string? rawDate) =>
-            DateTime.TryParse(rawDate, out var d) ? d.ToString("M/d") : (rawDate ?? string.Empty);
+            string.IsNullOrEmpty(rawDate) ? string.Empty : rawDate.ToDisplayDate();
 
         // ── Chip management ──────────────────────────────────────────────
 
@@ -691,12 +692,8 @@ namespace SaturdayPulse.ViewModels
     /// display strings the original card already used (DisplayMargin /
     /// DisplayOU) — reused as-is, not reconstructed from VegasLines.
     ///
-    /// ASSUMPTION FLAGGED: DateShort is parsed from GameResult.GameDate,
-    /// guessed by analogy with PlayedWeekInfo.GameDate (used elsewhere for
-    /// the weeks endpoint) since GroupHeader/ShowGroupHeader clearly derive
-    /// from *some* raw date field on GameResult but I don't have that model
-    /// file to confirm the actual property name. If GameDate doesn't exist
-    /// on GameResult, swap the source field in BuildGameRow below.
+    /// DateShort is parsed from GameResult.GameDate (yyyy-MM-dd), same field
+    /// GroupHeader uses — formatted via the shared ToDisplayDate() extension.
     /// </summary>
     public class MyTeamsGameRow
     {

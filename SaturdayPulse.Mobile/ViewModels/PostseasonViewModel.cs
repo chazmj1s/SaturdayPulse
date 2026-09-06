@@ -64,35 +64,6 @@ namespace SaturdayPulse.ViewModels
                 game.IsDetailsExpanded = !game.IsDetailsExpanded;
             });
 
-            // Manual single-game refresh (⟳ icon, Season-Pass-gated in XAML).
-            // Mirrors ScheduleViewModel's RefreshGameCommand exactly — same
-            // endpoint, same guard, same failure UX. Kept independent per-VM
-            // rather than hoisted into BaseViewModel to match the existing
-            // ToggleDetailsCommand duplication pattern already in this codebase.
-            RefreshGameCommand = new Microsoft.Maui.Controls.Command<GameResult>(async game =>
-            {
-                if (game == null || game.IsRefreshing) return;
-
-                game.IsRefreshing = true;
-                try
-                {
-                    var result = await _apiService.RefreshGameAsync(game.Id);
-                    if (result == null)
-                    {
-                        await Shell.Current.DisplayAlert(
-                            "Refresh Failed", "Couldn't refresh this game. Try again in a moment.", "OK");
-                        return;
-                    }
-
-                    game.HomePoints = result.HomePoints;
-                    game.AwayPoints = result.AwayPoints;
-                }
-                finally
-                {
-                    game.IsRefreshing = false;
-                }
-            });
-
             // Section collapse toggles
             ToggleRoundExpandCommand = new Microsoft.Maui.Controls.Command<PlayoffRound>(round =>
             {
@@ -170,7 +141,6 @@ namespace SaturdayPulse.ViewModels
         public ICommand ToggleMatchupExpandCommand    { get; }
         public ICommand ToggleContendersExpandCommand { get; }
         public ICommand ToggleDetailsCommand          { get; }
-        public ICommand RefreshGameCommand            { get; }
         public ICommand ToggleRoundExpandCommand      { get; }
         public ICommand ToggleWeekendExpandCommand    { get; }
 
