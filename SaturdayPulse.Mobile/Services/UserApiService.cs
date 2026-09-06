@@ -490,6 +490,44 @@ namespace SaturdayPulse.Services
             }
         }
 
+        // ── Server logs (admin-only, Debug Log support) ─────────────────
+
+        /// <summary>
+        /// GET /logs?take={take} — recent server-side log entries (currently
+        /// GameScorePollingService activity; see ServerLogService/
+        /// InMemoryLoggerProvider on the Api side). Gated by [Authorize] +
+        /// [AdminOnly] there (real Auth0 login + IsAdmin, no shared secret),
+        /// same as SetDevEntitlementAsync above — the UI only shows the
+        /// Debug Log section when CanAccessDebugLog/IsAdmin is already true,
+        /// but the server enforces this independently either way. Returns
+        /// null on any failure (including a 403 for a non-admin caller) so
+        /// callers can leave existing entries untouched rather than clearing
+        /// the log on a failed refresh.
+        /// </summary>
+        public async Task<List<SaturdayPulse.Core.Diagnostics.LogEntry>?> GetServerLogsAsync(int take = 200)
+        {
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, $"logs?take={take}");
+                await AttachAuthAsync(request);
+
+                using var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[UserAPI] GetServerLogs failed: {response.StatusCode}");
+                    return null;
+                }
+
+                return await response.Content
+                    .ReadFromJsonAsync<List<SaturdayPulse.Core.Diagnostics.LogEntry>>(_jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[UserAPI] Error GetServerLogs: {ex.Message}");
+                return null;
+            }
+        }
+
         // ── Auth plumbing ──────────────────────────────────────────────
 
         /// <summary>

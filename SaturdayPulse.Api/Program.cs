@@ -82,6 +82,16 @@ builder.Services.AddScoped<RatingComparisonService>();
 
 builder.Services.AddSingleton<ProjectionCacheService>();
 
+// ── Server-side in-memory log (Debug Log support) ──────────────────────────────
+// Captures ILogger output from tracked categories (GameScorePollingService,
+// etc. — see InMemoryLoggerProvider.TrackedCategoryPrefixes) into a ring
+// buffer the Mobile app can pull via LogsController ([Authorize]+[AdminOnly],
+// no shared secret). Existing logger.LogX(...) calls in those services are
+// unchanged — this only adds a second listener on top of them.
+builder.Services.AddSingleton<ServerLogService>();
+builder.Services.AddSingleton<ILoggerProvider>(sp =>
+    new InMemoryLoggerProvider(sp.GetRequiredService<ServerLogService>()));
+
 // ── Background services ────────────────────────────────────────────────────────
 // Polls CFBD for score updates every 5 min, only during today's kickoff-to-
 // margin window. See GameScorePollingService remarks for details.

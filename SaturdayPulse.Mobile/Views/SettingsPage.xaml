@@ -997,7 +997,8 @@
                     <VerticalStackLayout IsVisible="{Binding IsDebugLogExpanded}" Spacing="0">
 
                         <!-- Toolbar: entry count + clear -->
-                        <Grid ColumnDefinitions="*,Auto"
+                        <Grid ColumnDefinitions="*,Auto,Auto"
+                              ColumnSpacing="8"
                               Padding="12,8"
                               BackgroundColor="{AppThemeBinding Light=#F8F8F8, Dark=#1E1E1E}">
                             <Label Grid.Column="0"
@@ -1005,6 +1006,19 @@
                                    FontSize="11" Opacity="0.6"
                                    VerticalOptions="Center" />
                             <Border Grid.Column="1"
+                                    StrokeShape="RoundRectangle 4"
+                                    Stroke="{AppThemeBinding Light=#CCCCCC, Dark=#444444}"
+                                    StrokeThickness="1"
+                                    Padding="10,4">
+                                <Label Text="Refresh"
+                                       FontSize="11"
+                                       TextColor="{AppThemeBinding Light={StaticResource AccentPrimaryLight}, Dark={StaticResource AccentPrimaryDark}}">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding RefreshLogCommand}" />
+                                    </Label.GestureRecognizers>
+                                </Label>
+                            </Border>
+                            <Border Grid.Column="2"
                                     StrokeShape="RoundRectangle 4"
                                     Stroke="{AppThemeBinding Light=#CCCCCC, Dark=#444444}"
                                     StrokeThickness="1"

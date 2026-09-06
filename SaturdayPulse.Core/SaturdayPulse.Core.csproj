@@ -7,6 +7,10 @@
     <RootNamespace>SaturdayPulse.Core</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Disgnostics\" />
+  </ItemGroup>
+
   <!--
     Deliberately no PackageReferences here. This project exists to be
     referenced from Api (net9.0), AdminBlazor (net9.0), and Mobile
