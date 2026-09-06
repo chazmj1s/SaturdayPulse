@@ -417,6 +417,7 @@ namespace SaturdayPulse.ViewModels
         public ICommand EditEmailCommand               { get; }
         public ICommand EditPhoneCommand                { get; }
         public ICommand ClearLogCommand                { get; }
+        public ICommand RefreshLogCommand              { get; }
         public ICommand LoginCommand                   { get; }
         public ICommand CreateAccountCommand           { get; }
         public ICommand LogoutCommand                  { get; }
@@ -794,6 +795,25 @@ namespace SaturdayPulse.ViewModels
             {
                 AppLogger.Clear();
                 OnPropertyChanged(nameof(LogEntryCount));
+            });
+
+            // Pulls recent server-side log entries (GameScorePollingService,
+            // etc. — see ServerLogService/InMemoryLoggerProvider on the Api
+            // side) and merges them alongside on-device entries. A failed
+            // fetch (network error, non-admin, etc.) leaves existing entries
+            // untouched rather than clearing anything.
+            RefreshLogCommand = new Microsoft.Maui.Controls.Command(async () =>
+            {
+                var remote = await _userApi.GetServerLogsAsync();
+                if (remote != null)
+                {
+                    AppLogger.MergeRemote(remote);
+                    OnPropertyChanged(nameof(LogEntryCount));
+                }
+                else
+                {
+                    StatusMessage = "Couldn't refresh server logs.";
+                }
             });
 
             // Keep LogEntryCount in sync as entries are added/removed

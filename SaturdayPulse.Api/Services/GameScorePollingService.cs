@@ -64,7 +64,7 @@ namespace SaturdayPulse.Services
             // BackgroundService is a singleton; IUnitOfWork is scoped — new
             // scope per tick, same pattern as any other background-job-style
             // consumer of scoped services in ASP.NET Core.
-            using var scope = scopeFactory.CreateScope();
+            await using var scope = scopeFactory.CreateAsyncScope();
             var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
             var today = DateTime.Now.ToString("yyyy-MM-dd");
