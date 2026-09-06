@@ -67,7 +67,7 @@ namespace SaturdayPulse.Services
             using var scope = scopeFactory.CreateScope();
             var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-            var today = DateTime.Now.ToString("MM/dd/yyyy");
+            var today = DateTime.Now.ToString("yyyy-MM-dd");
             var yearNow = DateTime.Now.Year;
 
             // GetByYearAsync already exists and is proven elsewhere in this

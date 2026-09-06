@@ -749,7 +749,7 @@ namespace SaturdayPulse.Services
                     Year           = d.Season,
                     Week           = d.Week,
                     SeasonType     = d.SeasonType,
-                    GameDate       = parsed?.ToString("MM/dd/yyyy") ?? d.StartDate,
+                    GameDate       = parsed?.ToString("yyyy-MM-dd") ?? d.StartDate,
                     GameDay        = parsed != null ? parsed.Value.DayOfWeek.ToString()[..3].ToUpper() : null,
                     KickoffTime    = parsed?.ToString(KickoffTimeFormat, CultureInfo.InvariantCulture),
                     HomeId         = d.HomeId,

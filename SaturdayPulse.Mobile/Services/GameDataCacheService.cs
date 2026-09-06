@@ -101,7 +101,7 @@ namespace SaturdayPulse.Services
         private static DateTime ParseKickoff(string? gameDate, string? gameTime)
         {
             if (string.IsNullOrEmpty(gameDate) ||
-                !DateTime.TryParseExact(gameDate, "MM/dd/yyyy", CultureInfo.InvariantCulture,
+                !DateTime.TryParseExact(gameDate, "yyyy-MM-dd", CultureInfo.InvariantCulture,
                     DateTimeStyles.None, out var datePart))
                 return DateTime.MaxValue; // no parseable date at all — sort last, don't crash the sort
 

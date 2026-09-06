@@ -126,28 +126,52 @@
     </Grid>
 
     <!-- ═══════════════════════════════════════════════════ -->
-    <!-- ROW 3: Conference filter pill                       -->
+    <!-- ROW 3: Conference filter pill + admin refresh        -->
     <!-- ═══════════════════════════════════════════════════ -->
-    <Border Grid.Row="3"
-            StrokeShape="RoundRectangle 6"
-            Stroke="{AppThemeBinding Light=#CCCCCC, Dark=#444444}"
-            StrokeThickness="1"
-            BackgroundColor="{AppThemeBinding Light=White, Dark=#2A2A2A}"
-            Margin="10,4,10,4" Padding="8,3">
-      <Grid ColumnDefinitions="*,Auto">
-        <Label Grid.Column="0"
-               Text="{Binding SelectedConference}"
-               FontSize="13" FontAttributes="Bold"
-               VerticalOptions="Center" LineBreakMode="TailTruncation" />
-        <Label Grid.Column="1"
-               Text="▾" FontSize="11"
-               TextColor="{AppThemeBinding Light=#888888, Dark=#777777}"
-               VerticalOptions="Center" Margin="4,0,0,0" />
-        <Grid.GestureRecognizers>
-          <TapGestureRecognizer Command="{Binding SelectConferenceCommand}" />
-        </Grid.GestureRecognizers>
-      </Grid>
-    </Border>
+    <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
+      <Border Grid.Column="0"
+              StrokeShape="RoundRectangle 6"
+              Stroke="{AppThemeBinding Light=#CCCCCC, Dark=#444444}"
+              StrokeThickness="1"
+              BackgroundColor="{AppThemeBinding Light=White, Dark=#2A2A2A}"
+              Margin="10,4,4,4" Padding="8,3">
+        <Grid ColumnDefinitions="*,Auto">
+          <Label Grid.Column="0"
+                 Text="{Binding SelectedConference}"
+                 FontSize="13" FontAttributes="Bold"
+                 VerticalOptions="Center" LineBreakMode="TailTruncation" />
+          <Label Grid.Column="1"
+                 Text="▾" FontSize="11"
+                 TextColor="{AppThemeBinding Light=#888888, Dark=#777777}"
+                 VerticalOptions="Center" Margin="4,0,0,0" />
+          <Grid.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding SelectConferenceCommand}" />
+          </Grid.GestureRecognizers>
+        </Grid>
+      </Border>
+
+      <!-- Admin-only manual refresh (2026-09-05) — IsAdmin is set via
+           direct SQL only, no client toggle. Visible only on the Games
+           tab (ShowDevForceRefresh); reuses ScheduleViewModel's existing
+           RefreshCommand via MainViewModel.DevForceRefreshCommand rather
+           than pull-to-refresh, which can't be gestured on Windows while
+           debugging. -->
+      <Border Grid.Column="1"
+              IsVisible="{Binding ShowDevForceRefresh}"
+              StrokeShape="RoundRectangle 6"
+              Stroke="{AppThemeBinding Light=#CCCCCC, Dark=#444444}"
+              StrokeThickness="1"
+              BackgroundColor="{AppThemeBinding Light=White, Dark=#2A2A2A}"
+              Margin="0,4,10,4" Padding="8,3"
+              VerticalOptions="Center">
+        <Label Text="&#x27F3;" FontSize="16"
+               TextColor="{AppThemeBinding Light={StaticResource AccentPrimaryLight}, Dark={StaticResource AccentPrimaryDark}}">
+          <Label.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding DevForceRefreshCommand}" />
+          </Label.GestureRecognizers>
+        </Label>
+      </Border>
+    </Grid>
 
     <!-- ═══════════════════════════════════════════════════ -->
     <!-- ROW 4: Divider — separates header/filter section     -->

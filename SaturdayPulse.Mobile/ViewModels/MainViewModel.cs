@@ -30,6 +30,7 @@ namespace SaturdayPulse.ViewModels
         private readonly GameDataApiService           _apiService;
         private readonly GameDataCacheService         _cache;
         private readonly MyTeamsViewModel              _myTeamsViewModel;
+        private readonly ScheduleViewModel             _scheduleViewModel;
         private readonly EntitlementService            _entitlementService;
         private int  _selectedIndex = 0;
         private bool _yearChangeInFlight;   // re-entrancy guard (main-thread only)
@@ -37,6 +38,14 @@ namespace SaturdayPulse.ViewModels
 
         // My Teams is tab 0 — see MainPage.xaml.cs AddPageToHost order.
         private const int MyTeamsTabIndex = 0;
+
+        // Games is tab 1 — INFERRED from the visible tab-strip order (My
+        // Teams, Games, Rankings, Postseason, Sandbox) and the existing
+        // MyTeamsTabIndex(0)/SettingsTabIndex(5) consts, not confirmed
+        // against MainPage.xaml.cs's actual AddPageToHost calls. Used by
+        // TabChangeRequested (My Teams' opponent-name navigation) — if the
+        // app lands on the wrong tab, this is the one line to fix.
+        private const int GamesTabIndex = 1;
 
         // Settings still lives at PageHost position 5 (AddPageToHost order is
         // unchanged), it's just no longer one of the entries in TabItems, so
@@ -55,13 +64,24 @@ namespace SaturdayPulse.ViewModels
             GameDataApiService apiService,
             GameDataCacheService cache,
             MyTeamsViewModel myTeamsViewModel,
+            ScheduleViewModel scheduleViewModel,
             EntitlementService entitlementService)
         {
             _navState         = navState;
             _apiService       = apiService;
             _cache            = cache;
             _myTeamsViewModel = myTeamsViewModel;
+            _scheduleViewModel = scheduleViewModel;
             _entitlementService = entitlementService;
+
+            // Admin-only manual refresh (2026-09-05) — reuses ScheduleViewModel's
+            // existing RefreshCommand rather than duplicating LoadDataAsync here.
+            // Gated to IsAdmin (server-set via SQL only, no client toggle) and to
+            // the Games tab via ShowDevForceRefresh — see that property.
+            DevForceRefreshCommand = new Microsoft.Maui.Controls.Command(() =>
+            {
+                _scheduleViewModel.RefreshCommand.Execute(null);
+            });
 
             SelectTabCommand = new Microsoft.Maui.Controls.Command<int>(idx =>
             {
@@ -196,10 +216,17 @@ namespace SaturdayPulse.ViewModels
             // prevents a free user from picking a new out-of-window year,
             // it doesn't by itself undo one they already had access to.
             _entitlementService.EntitlementChanged += OnEntitlementChanged;
+
+            // My Teams' opponent-name navigation (2026-09-05) — MyTeamsViewModel
+            // has no reference to this VM, so it asks via SharedNavigationStateService.
+            _navState.TabChangeRequested += () => SelectedIndex = GamesTabIndex;
         }
 
         private async void OnEntitlementChanged()
         {
+            OnPropertyChanged(nameof(IsAdmin));
+            OnPropertyChanged(nameof(ShowDevForceRefresh));
+
             if (_entitlementService.HasSeasonPass) return;
 
             var currentYear = DateTime.Now.Year;
@@ -347,6 +374,7 @@ namespace SaturdayPulse.ViewModels
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(ConferencePillText));
                     OnPropertyChanged(nameof(IsConferencePillInteractive));
+                    OnPropertyChanged(nameof(ShowDevForceRefresh));
                 }
             }
         }
@@ -372,6 +400,17 @@ namespace SaturdayPulse.ViewModels
         public int    SelectedWeek       => _navState.SelectedWeek;
         public string SelectedConference => _navState.SelectedConference;
         public bool   ShowFavoritesFirst => _navState.ShowFavoritesFirst;
+
+        /// <summary>Server-set via SQL only (see EntitlementService) — no client-side toggle.</summary>
+        public bool IsAdmin => _entitlementService.IsAdmin;
+
+        /// <summary>
+        /// Admin-only manual refresh control shown next to the Conference
+        /// filter pill, visible only while on the Games/Schedule tab.
+        /// </summary>
+        public bool ShowDevForceRefresh => IsAdmin;
+
+        public ICommand DevForceRefreshCommand { get; }
 
         /// <summary>
         /// On every tab except My Teams: the global conference filter

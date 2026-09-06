@@ -29,7 +29,8 @@
                  Command="{Binding RefreshCommand}"
                  IsRefreshing="False">
 
-            <CollectionView ItemsSource="{Binding Games}"
+            <CollectionView x:Name="GamesCollectionView"
+                            ItemsSource="{Binding Games}"
                             ItemSizingStrategy="MeasureAllItems">
 
                 <CollectionView.ItemTemplate>
@@ -47,10 +48,19 @@
       </Grid>
 
       <!-- Game card -->
-      <Grid ColumnDefinitions="32,28,*,22,52,96"
+      <Grid ColumnDefinitions="32,28,*,52,96"
             RowDefinitions="Auto,Auto"
             Padding="6,5,10,5"
             BackgroundColor="{Binding IsOddRow, Converter={StaticResource OddRowBackgroundConverter}}">
+
+        <!-- Cross-tab highlight (2026-09-05) — My Teams' opponent-name
+             navigation target. Overrides the odd-row background while
+             active; reverts automatically once IsHighlighted goes false. -->
+        <Grid.Triggers>
+          <DataTrigger TargetType="Grid" Binding="{Binding IsHighlighted}" Value="True">
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FFF3CD, Dark=#4A3B00}" />
+          </DataTrigger>
+        </Grid.Triggers>
 
         <!-- Wk label + star game follow -->
         <VerticalStackLayout Grid.Row="0" Grid.Column="0" Grid.RowSpan="2"
@@ -85,21 +95,7 @@
         <Label Grid.Row="0" Grid.Column="2" Text="{Binding VisitorName}"
                FontSize="13" VerticalOptions="Center" LineBreakMode="TailTruncation" />
 
-        <!-- Single-game on-demand refresh — placeholder pending refresh
-             endpoint (2026-08-29). Centered above Details toggle, left of scores. -->
-        <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="3"
-                HorizontalOptions="Center" VerticalOptions="Center"
-                Padding="4,6" StrokeThickness="0" BackgroundColor="Transparent">
-          <Border.GestureRecognizers>
-            <TapGestureRecognizer
-                Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.RefreshGameCommand}"
-                CommandParameter="{Binding .}" />
-          </Border.GestureRecognizers>
-          <Label Text="&#x27F3;" FontSize="16"
-                 TextColor="{AppThemeBinding Light={StaticResource AccentPrimaryLight}, Dark={StaticResource AccentPrimaryDark}}" />
-        </Border>
-
-        <Label Grid.Row="0" Grid.Column="4"
+        <Label Grid.Row="0" Grid.Column="3"
                FontSize="13" FontAttributes="Bold"
                HorizontalOptions="End" VerticalOptions="Center"
                TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}">
@@ -111,7 +107,7 @@
             </MultiBinding>
           </Label.Text>
         </Label>
-        <VerticalStackLayout Grid.Row="0" Grid.Column="5" Spacing="1"
+        <VerticalStackLayout Grid.Row="0" Grid.Column="4" Spacing="1"
                HorizontalOptions="End" VerticalOptions="Center">
           <Label Text="{Binding DisplayGameTime}"
                  FontSize="10" HorizontalOptions="End"
@@ -150,7 +146,7 @@
             </FormattedString>
           </Label.FormattedText>
         </Label>
-        <Label Grid.Row="1" Grid.Column="4"
+        <Label Grid.Row="1" Grid.Column="3"
                FontSize="13" FontAttributes="Bold"
                HorizontalOptions="End" VerticalOptions="Center"
                TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}">
@@ -162,7 +158,7 @@
             </MultiBinding>
           </Label.Text>
         </Label>
-        <VerticalStackLayout Grid.Row="1" Grid.Column="5" Spacing="1"
+        <VerticalStackLayout Grid.Row="1" Grid.Column="4" Spacing="1"
                HorizontalOptions="End" VerticalOptions="Center">
           <Label FontSize="11" HorizontalOptions="End"
                  TextColor="{AppThemeBinding Light={StaticResource TextTertiaryLight}, Dark={StaticResource TextTertiaryDark}}">

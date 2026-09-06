@@ -21,7 +21,7 @@
       <VerticalStackLayout Spacing="0">
 
         <!-- Game card body -->
-        <Grid ColumnDefinitions="32,28,*,22,52,96"
+        <Grid ColumnDefinitions="32,28,*,52,96"
               RowDefinitions="Auto,Auto"
               Padding="6,5,10,5"
               BackgroundColor="{Binding IsOddRow, Converter={StaticResource OddRowBackgroundConverter}}">
@@ -59,25 +59,11 @@
           <Label Grid.Row="0" Grid.Column="2" Text="{Binding VisitorName}"
                  FontSize="13" VerticalOptions="Center" LineBreakMode="TailTruncation" />
 
-          <!-- Single-game on-demand refresh — placeholder pending refresh
-               endpoint (2026-08-29). Centered above Details toggle, left of scores. -->
-          <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="3"
-                  HorizontalOptions="Center" VerticalOptions="Center"
-                  Padding="4,6" StrokeThickness="0" BackgroundColor="Transparent">
-            <Border.GestureRecognizers>
-              <TapGestureRecognizer
-                  Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.RefreshGameCommand}"
-                  CommandParameter="{Binding .}" />
-            </Border.GestureRecognizers>
-            <Label Text="&#x27F3;" FontSize="16"
-                   TextColor="{AppThemeBinding Light={StaticResource AccentPrimaryLight}, Dark={StaticResource AccentPrimaryDark}}" />
-          </Border>
-
-          <Label Grid.Row="0" Grid.Column="4" Text="{Binding DisplayVisitorScore}"
+          <Label Grid.Row="0" Grid.Column="3" Text="{Binding DisplayVisitorScore}"
                  FontSize="13" FontAttributes="Bold"
                  HorizontalOptions="End" VerticalOptions="Center"
                  TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
-          <Label Grid.Row="0" Grid.Column="5" Text="{Binding DisplayMargin}"
+          <Label Grid.Row="0" Grid.Column="4" Text="{Binding DisplayMargin}"
                  FontSize="11" HorizontalOptions="End" VerticalOptions="Center"
                  TextColor="{AppThemeBinding Light={StaticResource TextTertiaryLight}, Dark={StaticResource TextTertiaryDark}}" />
 
@@ -102,11 +88,11 @@
               </FormattedString>
             </Label.FormattedText>
           </Label>
-          <Label Grid.Row="1" Grid.Column="4" Text="{Binding DisplayHomeScore}"
+          <Label Grid.Row="1" Grid.Column="3" Text="{Binding DisplayHomeScore}"
                  FontSize="13" FontAttributes="Bold"
                  HorizontalOptions="End" VerticalOptions="Center"
                  TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
-          <Label Grid.Row="1" Grid.Column="5" Text="{Binding DisplayOU}"
+          <Label Grid.Row="1" Grid.Column="4" Text="{Binding DisplayOU}"
                  FontSize="11" HorizontalOptions="End" VerticalOptions="Center"
                  TextColor="{AppThemeBinding Light={StaticResource TextTertiaryLight}, Dark={StaticResource TextTertiaryDark}}" />
 

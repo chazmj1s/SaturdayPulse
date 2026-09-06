@@ -102,6 +102,7 @@ namespace SaturdayPulse.Models
                 _status = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(DisplayGameStatus));
+                OnPropertyChanged(nameof(IsFinal));
             }
         }
 
@@ -132,16 +133,45 @@ namespace SaturdayPulse.Models
         }
 
         /// <summary>
-        /// "final" when Status is "completed" (case-insensitive), otherwise
-        /// "{Period} : {Clock}". Empty when Status hasn't been populated —
-        /// used as the visibility gate in XAML rather than a separate bool.
+        /// "Final" when Status is "completed" (case-insensitive); "Halftime"
+        /// when Period is 2 and Clock has hit zero; otherwise
+        /// "{Clock} {periodLabel}" (e.g. "12:34 2nd", "0:42 OT").
+        /// Empty when Status hasn't been populated — used as the visibility
+        /// gate in XAML rather than a separate bool.
         /// </summary>
-        public string DisplayGameStatus =>
-            string.IsNullOrEmpty(Status)
-                ? string.Empty
-                : Status.Equals("completed", StringComparison.OrdinalIgnoreCase)
-                    ? "final"
-                    : $"{Period} : {Clock}";
+        public string DisplayGameStatus
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(Status)) return string.Empty;
+
+                if (Status.Equals("completed", StringComparison.OrdinalIgnoreCase))
+                    return "Final";
+
+                if (Period == 2 && IsClockZero(Clock))
+                    return "Halftime";
+
+                var period = Period ?? 0;
+                var periodLabel = period switch
+                {
+                    1 => "1st",
+                    2 => "2nd",
+                    3 => "3rd",
+                    4 => "4th",
+                    5 => "OT",
+                    > 5 => $"{period - 4}OT",
+                    _ => string.Empty
+                };
+
+                return string.IsNullOrEmpty(periodLabel)
+                    ? Clock ?? string.Empty
+                    : $"{Clock} {periodLabel}";
+            }
+        }
+
+        /// <summary>Matches "0:00" / "00:00" without a TimeSpan parse — CFBD's clock field is a plain "M:SS" string.</summary>
+        private static bool IsClockZero(string? clock) =>
+            !string.IsNullOrEmpty(clock) && clock.TrimStart('0', ':').Length == 0;
 
         // ── Derived: who won ──────────────────────────────────────────────
         public bool HomeIsWinner => IsPlayed && HomePoints >= AwayPoints;
@@ -206,12 +236,13 @@ namespace SaturdayPulse.Models
         {
             get
             {
-                if (string.IsNullOrEmpty(GameDay) || string.IsNullOrEmpty(GameDate))
+                if (string.IsNullOrEmpty(GameDate))
                     return $"Week {Week}";
 
-                var parts    = GameDate.Split(' ');
-                var monthDay = parts.Length >= 2 ? $"{parts[0]} {parts[1]}" : GameDate;
-                return $"{GameDay}, {monthDay}";
+                return DateTime.TryParseExact(GameDate, "yyyy-MM-dd", CultureInfo.InvariantCulture,
+                        DateTimeStyles.None, out var d)
+                    ? d.ToString("ddd, MMM %d", CultureInfo.InvariantCulture)
+                    : GameDate;
             }
         }
 
@@ -245,16 +276,16 @@ namespace SaturdayPulse.Models
             set { _isGameFavorited = value; OnPropertyChanged(); }
         }
 
-        // ── Manual refresh state ────────────────────────────────────────
-        // Set true for the duration of GameDataApiService.RefreshGameAsync().
-        // Used by RefreshGameCommand (Schedule/PostseasonViewModel) to no-op a
-        // second tap while a refresh is in flight. Not yet wired into the
-        // refresh-icon XAML (icon doesn't spin), but the guard works regardless.
-        private bool _isRefreshing;
-        public bool IsRefreshing
+        // ── Cross-tab highlight (2026-09-05) ────────────────────────────
+        // Set true on the single game targeted by My Teams' opponent-name
+        // navigation (see ScheduleViewModel.OnGameHighlightRequested). Not
+        // persisted, not filtered on — purely a visual cue consumed by
+        // SchedulePage.xaml's DataTrigger.
+        private bool _isHighlighted;
+        public bool IsHighlighted
         {
-            get => _isRefreshing;
-            set { _isRefreshing = value; OnPropertyChanged(); }
+            get => _isHighlighted;
+            set { _isHighlighted = value; OnPropertyChanged(); }
         }
 
         // ── Game detail expand ────────────────────────────────────────────
@@ -321,6 +352,20 @@ namespace SaturdayPulse.Models
 
         /// <summary>Show the Details toggle if we have stats OR it's inter-division.</summary>
         public bool ShowDetails => HasStats || IsInterDivision;
+
+        /// <summary>
+        /// True only once the game has actually concluded. Distinct from
+        /// IsPlayed, which flips true as soon as CFBD starts reporting a
+        /// score — i.e. also true for in-progress games — so IsPlayed alone
+        /// isn't safe to sort "completed games to the bottom" on. Falls back
+        /// to IsPlayed when Status hasn't been populated (games from before
+        /// the live-status pipeline, or outside the poller's today-only
+        /// window), so older weeks still group correctly.
+        /// </summary>
+        public bool IsFinal =>
+            !string.IsNullOrEmpty(Status)
+                ? Status.Equals("completed", StringComparison.OrdinalIgnoreCase)
+                : IsPlayed;
 
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? name = null)
